@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Server Log Dashboard
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/chart.js"
+    ></script>
+
+</head>
+
+<body>
+
+
+<header class="topbar">
+
+    <div>
+
+        <h1>
+            Server Log Dashboard
+        </h1>
+
+        <p>
+            Multi-format HTTP log analysis
+        </p>
+
+    </div>
+
+
+    <div class="topbar-actions">
+
+    <button
+        id="liveButton"
+        class="live-button"
+        type="button"
+    >
+        Start Live
+    </button>
+
+    <label class="upload-button">
+
+        Analyze Log
+
+        <input
+            id="fileInput"
+            type="file"
+            hidden
+        >
+
+    </label>
+
+</div>
+
+</header>
+
+
+<main class="container">
+
+
+<section
+    id="uploadSection"
+    class="upload-section"
+>
+
+    <div
+        id="dropZone"
+        class="drop-zone"
+    >
+
+        <div class="upload-icon">
+            ↑
+        </div>
+
+        <h2>
+            Analyze server logs
+        </h2>
+
+        <p>
+            Drop a log file here or
+            choose one from your computer.
+        </p>
+
+        <button
+            id="browseButton"
+            type="button"
+        >
+            Choose File
+        </button>
+
+
+        <div class="format-support">
+
+            <span>JSON</span>
+            <span>Nginx</span>
+            <span>Apache</span>
+            <span>Custom</span>
+
+        </div>
+
+    </div>
+
+
+    <p
+        id="message"
+        class="message"
+    ></p>
+
+</section>
+
+
+<section
+    id="dashboard"
+    class="dashboard hidden"
+>
+
+
+    <div class="dashboard-header">
+
+        <div>
+
+            <h2>
+                Server Health
+            </h2>
+
+            <p id="filename"></p>
+
+        </div>
+
+
+        <span
+            id="overallHealth"
+            class="health-pill"
+        >
+            Healthy
+        </span>
+
+    </div>
+
+
+    <div class="metadata-bar">
+
+        <div
+        id="liveStatus"
+        class="live-status hidden"
+    >
+        <span class="live-dot"></span>
+
+        <span>
+            Live monitoring active
+        </span>
+    </div>
+
+        <div>
+
+            <span class="metadata-label">
+                Detected
+            </span>
+
+            <strong id="detectedFormat">
+                —
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span class="metadata-label">
+                Parsed
+            </span>
+
+            <strong id="parsedCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span class="metadata-label">
+                Ignored
+            </span>
+
+            <strong id="ignoredCount">
+                0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="cards">
+
+        <article class="card">
+
+            <p>
+                Total Requests
+            </p>
+
+            <h3 id="totalRequests">
+                0
+            </h3>
+
+        </article>
+
+
+        <article class="card">
+
+            <p>
+                Success Rate
+            </p>
+
+            <h3 id="successRate">
+                0%
+            </h3>
+
+        </article>
+
+
+        <article class="card">
+
+            <p>
+                Error Rate
+            </p>
+
+            <h3 id="errorRate">
+                0%
+            </h3>
+
+        </article>
+
+
+        <article class="card">
+
+            <p>
+                P95 Latency
+            </p>
+
+            <h3 id="p95Latency">
+                N/A
+            </h3>
+
+        </article>
+
+    </div>
+
+
+    <div class="latency-cards">
+
+        <article class="small-card">
+
+            <span>Average</span>
+
+            <strong id="averageLatency">
+                N/A
+            </strong>
+
+        </article>
+
+
+        <article class="small-card">
+
+            <span>P50</span>
+
+            <strong id="p50Latency">
+                N/A
+            </strong>
+
+        </article>
+
+
+        <article class="small-card">
+
+            <span>P95</span>
+
+            <strong id="latencyP95">
+                N/A
+            </strong>
+
+        </article>
+
+
+        <article class="small-card">
+
+            <span>P99</span>
+
+            <strong id="p99Latency">
+                N/A
+            </strong>
+
+        </article>
+
+
+        <article class="small-card">
+
+            <span>Maximum</span>
+
+            <strong id="maxLatency">
+                N/A
+            </strong>
+
+        </article>
+
+    </div>
+
+
+    <div class="chart-grid">
+
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <h3>
+                    Requests Over Time
+                </h3>
+
+                <p>
+                    Traffic volume by minute
+                </p>
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas
+                    id="requestChart"
+                ></canvas>
+
+            </div>
+
+        </article>
+
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <h3>
+                    Status Codes
+                </h3>
+
+                <p>
+                    HTTP response distribution
+                </p>
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas
+                    id="statusChart"
+                ></canvas>
+
+            </div>
+
+        </article>
+
+
+    </div>
+
+
+    <article class="panel">
+
+        <div class="panel-header">
+
+            <h3>
+                Endpoint Health
+            </h3>
+
+            <p>
+                Reliability and performance
+                by route
+            </p>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                <tr>
+
+                    <th>Method</th>
+
+                    <th>Endpoint</th>
+
+                    <th>Requests</th>
+
+                    <th>Error Rate</th>
+
+                    <th>Average</th>
+
+                    <th>P95</th>
+
+                    <th>Health</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody
+                    id="endpointTable"
+                ></tbody>
+
+            </table>
+
+        </div>
+
+    </article>
+
+
+    <article class="panel">
+
+        <div class="panel-header">
+
+            <h3>
+                Recent Problems
+            </h3>
+
+            <p>
+                Errors and slow requests
+            </p>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                <tr>
+
+                    <th>Time</th>
+
+                    <th>Method</th>
+
+                    <th>Endpoint</th>
+
+                    <th>Status</th>
+
+                    <th>Latency</th>
+
+                    <th>Issue</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody
+                    id="problemTable"
+                ></tbody>
+
+            </table>
+
+        </div>
+
+    </article>
+
+
+</section>
+
+</main>
+
+
+<script
+    src="/static/app.js"
+></script>
+
+
+</body>
+
+</html>
